@@ -1,14 +1,35 @@
-# ubuntu-uitk-gallery-docker
+# Ubuntu UITK Gallery - Docker image
 
-## HOWTO
+## Installation
 
 ### Install [Docker](http://docker.com)
+
+From the website or using this command:
 
 ```sh
 $ curl -sSL https://get.docker.com/ | sh
 ```
 
-### Run the gallery app
+Add your user to the docker group:
+
+```sh
+$ sudo usermod -aG docker `whoami`
+```
+
+Start the docker daemon:
+
+```sh
+$ sudo service docker start
+```
+
+### Download `run-gallery.sh`
+
+```sh
+$ curl -OL https://rawgit.com/bpierre/ubuntu-uitk-gallery-docker/master/run-gallery.sh
+$ chmod +x ./run-gallery.sh
+```
+
+## Usage
 
 `run-gallery.sh` will fetch the code, compile the project if needed, and run the gallery app.
 
