@@ -27,13 +27,13 @@ $ chmod +x ./run-gallery.sh
 
 The `run-gallery.sh` script will fetch the code, compile the project if needed, and run the gallery app.
 
-Example using the default branch (`lp:ubuntu-ui-toolkit/staging`):
+Run it without any parameter to use the default branch, `lp:ubuntu-ui-toolkit/staging`:
 
 ```sh
 $ ./run-gallery.sh
 ```
 
-Example using a specific branch:
+To use another branch, pass it as a parameter:
 
 ```sh
 $ ./run-gallery.sh lp:ubuntu-ui-toolkit/trunk
