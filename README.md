@@ -5,7 +5,7 @@
 Install [Docker](http://docker.com) from the website or using this command:
 
 ```sh
-$ curl -sSL https://get.docker.com/ | sh
+$ wget -qO- https://get.docker.com/ | sh
 ```
 
 Add yourself to the docker group:
