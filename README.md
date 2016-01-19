@@ -1,5 +1,9 @@
 # Ubuntu UITK Gallery - Docker image
 
+## Support
+
+Tested on Ubuntu and Debian hosts. OS X support via Docker Machine is planned.
+
 ## Installation
 
 Install [Docker](http://docker.com) from the website or using this command:
