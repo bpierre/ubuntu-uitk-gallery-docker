@@ -2,15 +2,13 @@
 
 ## Installation
 
-### Install [Docker](http://docker.com)
-
-From the website or using this command:
+Install [Docker](http://docker.com) from the website or using this command:
 
 ```sh
 $ curl -sSL https://get.docker.com/ | sh
 ```
 
-Add your user to the docker group:
+Add yourself to the docker group:
 
 ```sh
 $ sudo usermod -aG docker `whoami`
@@ -22,12 +20,14 @@ Start the docker daemon:
 $ sudo service docker start
 ```
 
-### Download `run-gallery.sh`
+Download `run-gallery.sh`:
 
 ```sh
 $ curl -OL https://rawgit.com/bpierre/ubuntu-uitk-gallery-docker/master/run-gallery.sh
 $ chmod +x ./run-gallery.sh
 ```
+
+Logout and reopen a session.
 
 ## Usage
 
