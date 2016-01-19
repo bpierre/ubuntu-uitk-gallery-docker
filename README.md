@@ -1,6 +1,6 @@
 # Ubuntu UITK Gallery - Docker image
 
-Support: tested on Ubuntu and Debian hosts. OS X support via Docker Machine is planned.
+Tested on Ubuntu, Debian, and Fedora hosts. OS X support via Docker Machine is planned.
 
 ## Installation
 
