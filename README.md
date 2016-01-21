@@ -38,3 +38,20 @@ To use another branch, pass it as a parameter:
 ```sh
 $ ./run-gallery.sh lp:ubuntu-ui-toolkit/trunk
 ```
+
+## Known Issues
+
+On Ubuntu inside a virtual machine, the DNS resolution inside Docker containers can fail for some reason.
+
+Type this command to ensure it is that exact issue:
+
+```sh
+cat /etc/resolv.conf | awk '/nameserver/ {print $2}' | grep $(nmcli device show eth0 | awk '/IP4\.DNS/ {print$2}') && echo 'OK. Nothing to do.' || echo 'NOT OK.'
+```
+
+If you see the message “NOT OK”, run the following commands to update your `/etc/resolv.conf` file:
+
+```sh
+sudo bash -c "echo nameserver $(nmcli device show eth0 | awk '/DNS/{print $2}') >> /etc/resolvconf/resolv.conf.d/tail"
+sudo resolvconf -u && sudo systemctl restart network-manager
+```
