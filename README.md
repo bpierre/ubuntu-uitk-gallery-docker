@@ -39,9 +39,17 @@ To use another branch, pass it as a parameter:
 ./run-gallery.sh lp:ubuntu-ui-toolkit/trunk
 ```
 
+To remove the created Docker image and containers, run the following script:
+
+```sh
+./clean-all.sh
+```
+
 ## Known Issues
 
 On Ubuntu inside a virtual machine, the DNS resolution inside Docker containers can fail for some reason.
+
+*Note:* In the following commands, you may need to replace `eth0` by the name of your network device. Run the command `ifconfig` to see it.
 
 Type this command to ensure it is that exact issue:
 
