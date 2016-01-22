@@ -17,5 +17,5 @@ fi
 
 cd $BRANCH_PATH && \
 	qmake -makefile && \
-	make -j4 && \
+	make -j$(nproc) && \
 	./gallery.sh
