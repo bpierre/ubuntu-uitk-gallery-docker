@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DOCKER_HUB_ID="bpierre/ubuntu-uitk-gallery"
+DOCKER_IMAGE="bpierre/ubuntu-uitk-gallery"
 
 if [ -z "$1" ]; then
 	echo "The default branch lp:ubuntu-ui-toolkit/staging will be used."
@@ -16,4 +16,4 @@ docker start -a "$CID" || docker run -it \
 	-e DISPLAY=unix$DISPLAY \
 	-e UITK_BRANCH="$UITK_BRANCH" \
 	--name="$CID" \
-	$DOCKER_HUB_ID
+	$DOCKER_IMAGE
