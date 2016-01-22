@@ -15,6 +15,11 @@ else
 	bzr branch "$UITK_BRANCH" "$BRANCH_PATH"
 fi
 
+if [ $? -ne 0 ]; then
+	echo "Error. Exiting..."
+	exit 1
+fi
+
 cd $BRANCH_PATH && \
 	qmake -makefile && \
 	make -j$(nproc) && \
