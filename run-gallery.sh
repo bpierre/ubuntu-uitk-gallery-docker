@@ -6,11 +6,22 @@ GRID_UNIT_PX=8
 
 show_help() {
 cat << EOF
-Usage: ${0##*/} [-h] [-g GRID_UNITS] [UI_TOOLKIT_BRANCH]
-    -h               Display this help and exit.
-    -i DOCKER_IMAGE  Change the Docker image used to create the containers.
-    -g GRID_UNITS    Change the number of pixels per grid unit (to scale things).
+Usage: ./${0##*/} [-hc] [-i DOCKER_IMAGE] [-g GU_PX] [UI_TOOLKIT_BRANCH]
+
+    -h              Display this help and exit.
+    -i DOCKER_IMAGE Change the Docker image used to create the containers.
+    -g GU_PX        Change the number of pixels per grid unit (to scale
+                    things).
+    -c              Remove the containers and images created by the script.
 EOF
+}
+
+clean_all() {
+  echo 'Clean containers...'
+  docker rm $(docker ps -a | awk '/uitk_/ {print $1}')
+
+  echo 'Clean images...'
+  docker rmi  $DOCKER_IMAGE
 }
 
 # http://djm.me/ask
@@ -53,17 +64,25 @@ if ! command -v docker >/dev/null 2>&1; then
       echo "Please logout and login again, then launch the script again."
       exit 0
   fi
-  echo >&2 "Exiting."
-  exit 1
+  echo "Exiting."
+  exit 0
 fi
 
 # Get options
 OPTIND=1
-while getopts "hi:g:" opt; do
+while getopts "hci:g:" opt; do
   case "$opt" in
     h)
       show_help
       exit 0
+      ;;
+    c)
+      if ask "This action will clean all the Docker images and containers created by this script. Are you sure?" N; then
+        clean_all && exit 0
+      else
+        echo "Exiting."
+        exit 0
+      fi
       ;;
     i)
       DOCKER_IMAGE=$OPTARG

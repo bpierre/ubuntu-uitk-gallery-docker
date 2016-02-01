@@ -39,10 +39,29 @@ To use another branch, pass it as a parameter:
 ./run-gallery.sh lp:ubuntu-ui-toolkit/trunk
 ```
 
-To remove the created Docker image and containers, run the following script:
+Use the `-g` parameter to change the number of pixels per Grid Unit:
 
 ```sh
-./clean-all.sh
+./run-gallery.sh -g 16
+```
+
+Use the `-c` parameter to remove all the created Docker images and containers:
+
+```sh
+./run-gallery.sh -c
+```
+
+Use the `-h` option to display the help:
+
+```
+$ ./run-gallery.sh -h
+Usage: ./run-gallery.sh [-hc] [-i DOCKER_IMAGE] [-g GU_PX] [UI_TOOLKIT_BRANCH]
+
+    -h              Display this help and exit.
+    -i DOCKER_IMAGE Change the Docker image used to create the containers.
+    -g GU_PX        Change the number of pixels per grid unit (to scale
+                    things).
+    -c              Remove the containers and images created by the script.
 ```
 
 ## Known Issues
