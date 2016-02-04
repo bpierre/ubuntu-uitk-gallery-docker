@@ -20,7 +20,7 @@ EOF
 fix_ubuntu_dns() {
   echo "The script will now attempt to fix the Ubuntu DNS issue with virtual machines..."
 
-  device_name=$(nmcli device show | awk '{ if ($1 ~ /^GENERAL\.DEVICE/ && $2 !~ /^(lo|docker0)$/) print $2}')
+  device_name=$(nmcli device show | awk '{ if ($1 ~ /^GENERAL\.DEVICE/ && $2 !~ /^(lo|docker0)$/) print $2}' | head -n 1)
   result=$(cat /etc/resolv.conf | awk '/nameserver/ {print $2}' | grep $(nmcli device show ${device_name} | awk '/IP4\.DNS/ {print $2}'))
 
   if [ "$device_name" = "" ]; then
