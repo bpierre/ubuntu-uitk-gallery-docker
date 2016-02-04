@@ -6,45 +6,14 @@ GRID_UNIT_PX=8
 
 show_help() {
 cat << EOF
-Usage: ./${0##*/} [-hcf] [-i DOCKER_IMAGE] [-g GU_PX] [UI_TOOLKIT_BRANCH]
+Usage: ./${0##*/} [-hc] [-i DOCKER_IMAGE] [-g GU_PX] [UI_TOOLKIT_BRANCH]
 
     -h              Display this help and exit.
     -i DOCKER_IMAGE Change the Docker image used to create the containers.
     -g GU_PX        Change the number of pixels per grid unit (to scale
                     things).
     -c              Remove the containers and images created by the script.
-    -f              Fix a DNS issue encountered on Ubuntu.
 EOF
-}
-
-fix_ubuntu_dns() {
-  echo "The script will now attempt to fix the Ubuntu DNS issue with virtual machines..."
-
-  device_name=$(nmcli device show | awk '{ if ($1 ~ /^GENERAL\.DEVICE/ && $2 !~ /^(lo|docker0)$/) print $2}' | head -n 1)
-  result=$(cat /etc/resolv.conf | awk '/nameserver/ {print $2}' | grep $(nmcli device show ${device_name} | awk '/IP4\.DNS/ {print $2}'))
-
-  if [ "$device_name" = "" ]; then
-    echo "No device detected. Exiting."
-    exit 1
-  fi
-
-  echo "The detected network device name is ${device_name}."
-
-  if [ "$result" = "" ]; then
-    if ask "The network device IP address does not appear to be in your nameservers list. Do you wish to continue?" Y; then
-      sudo bash -c "echo nameserver $(nmcli device show ${device_name} | awk '/DNS/{print $2}') >> /etc/resolvconf/resolv.conf.d/tail"
-      echo "Updated the /etc/resolvconf/resolvconf.d/tail file. Restarting the network manager..."
-      sudo resolvconf -u && sudo systemctl restart network-manager
-      echo "Done. Try to run the script again."
-      exit 0
-    else
-      echo "Exiting."
-      exit 0
-    fi
-  fi
-
-  echo "The network device IP address is already in your nameservers list. Exiting."
-  exit 0
 }
 
 clean_all() {
@@ -118,9 +87,6 @@ while getopts "hcfi:g:" opt; do
     i)
       DOCKER_IMAGE=$OPTARG
       ;;
-    f)
-      fix_ubuntu_dns
-      ;;
     g)
       GRID_UNIT_PX=$OPTARG
       ;;
@@ -145,6 +111,14 @@ CID="uitk_$( \
 )"
 
 IMAGE_HOSTNAME=$(docker inspect --format='{{ .Config.Hostname }}' $DOCKER_IMAGE)
+DISTRIBUTION_NAME=$(python -c "import platform;print(platform.linux_distribution()[0])")
+
+DNS_PARAM=""
+
+if [ $DISTRIBUTION_NAME = "Ubuntu" ]; then
+  dns_server=$(nmcli dev show | awk '/IP4\.DNS/ {print $2}' | head -n1)
+  DNS_PARAM="--dns=$dns_server"
+fi
 
 xhost +local:$IMAGE_HOSTNAME >/dev/null 2>&1 \
   || { echo "X11 redirection error"; exit 1; }
@@ -159,6 +133,8 @@ if [ "$?" != "0" ]; then
     -e DISPLAY=unix$DISPLAY \
     -e UITK_BRANCH="$UITK_BRANCH" \
     --name="$CID" \
+    $DNS_PARAM \
+    --dns="8.8.8.8" \
     $DOCKER_IMAGE
 fi
 

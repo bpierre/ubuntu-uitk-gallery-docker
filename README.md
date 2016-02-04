@@ -42,22 +42,11 @@ Use the `-h` option to display the help:
 
 ```
 $ ./run-gallery.sh -h
-Usage: ./run-gallery.sh [-hcf] [-i DOCKER_IMAGE] [-g GU_PX] [UI_TOOLKIT_BRANCH]
+Usage: ./run-gallery.sh [-hc] [-i DOCKER_IMAGE] [-g GU_PX] [UI_TOOLKIT_BRANCH]
 
     -h              Display this help and exit.
     -i DOCKER_IMAGE Change the Docker image used to create the containers.
     -g GU_PX        Change the number of pixels per grid unit (to scale
                     things).
     -c              Remove the containers and images created by the script.
-    -f              Fix the DNS issue encountered on Ubuntu inside of a virtual machine.
-```
-
-## Known Issues
-
-On Ubuntu inside a virtual machine, the DNS resolution inside Docker containers can fail.
-
-To resolve the issue, use the `-f` parameter and follow the instructions:
-
-```
-$ ./run-gallery.sh -f
 ```
