@@ -4,14 +4,12 @@ Tested on Ubuntu, Debian, and Fedora hosts. OS X support via Docker Machine is 
 
 ## Installation
 
-### Download `run-gallery.sh`
+Download `run-gallery.sh`:
 
 ```sh
 curl -OL https://rawgit.com/bpierre/ubuntu-uitk-gallery-docker/master/run-gallery.sh
 chmod +x ./run-gallery.sh
 ```
-
-Logout / login again after having completed these steps.
 
 ## Usage
 
