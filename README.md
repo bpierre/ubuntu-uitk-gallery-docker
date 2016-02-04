@@ -4,18 +4,6 @@ Tested on Ubuntu, Debian, and Fedora hosts. OS X support via Docker Machine is 
 
 ## Installation
 
-### Install Docker (if not already installed)
-
-Either install [Docker](http://docker.com) from the website, or using these commands:
-
-```sh
-wget -qO- https://get.docker.com/ | sh
-sudo usermod -aG docker `whoami`
-sudo service docker start
-```
-
-Logout / login again after having completed these steps.
-
 ### Download `run-gallery.sh`
 
 ```sh
@@ -23,9 +11,16 @@ curl -OL https://rawgit.com/bpierre/ubuntu-uitk-gallery-docker/master/run-galler
 chmod +x ./run-gallery.sh
 ```
 
+Logout / login again after having completed these steps.
+
 ## Usage
 
-The `run-gallery.sh` script will fetch the code, compile the project if needed, and run the gallery app.
+The `run-gallery.sh` script will automatically:
+
+- Install Docker if needed (remember to logout / login after this)
+- Fetch the code from the selected branch
+- Compile the project if needed
+- Run the gallery app
 
 Run it without any parameter to use the default branch, `lp:ubuntu-ui-toolkit/staging`:
 
@@ -43,12 +38,6 @@ Use the `-g` parameter to change the number of pixels per Grid Unit:
 
 ```sh
 ./run-gallery.sh -g 16
-```
-
-Use the `-c` parameter to remove all the created Docker images and containers:
-
-```sh
-./run-gallery.sh -c
 ```
 
 Use the `-h` option to display the help:
