@@ -55,30 +55,22 @@ Use the `-h` option to display the help:
 
 ```
 $ ./run-gallery.sh -h
-Usage: ./run-gallery.sh [-hc] [-i DOCKER_IMAGE] [-g GU_PX] [UI_TOOLKIT_BRANCH]
+Usage: ./run-gallery.sh [-hcf] [-i DOCKER_IMAGE] [-g GU_PX] [UI_TOOLKIT_BRANCH]
 
     -h              Display this help and exit.
     -i DOCKER_IMAGE Change the Docker image used to create the containers.
     -g GU_PX        Change the number of pixels per grid unit (to scale
                     things).
     -c              Remove the containers and images created by the script.
+    -f              Fix the DNS issue encountered on Ubuntu inside of a virtual machine.
 ```
 
 ## Known Issues
 
-On Ubuntu inside a virtual machine, the DNS resolution inside Docker containers can fail for some reason.
+On Ubuntu inside a virtual machine, the DNS resolution inside Docker containers can fail.
 
-*Note:* In the following commands, you may need to replace `eth0` by the name of your network device. Run the command `ifconfig` to see it.
+To resolve the issue, use the `-f` parameter and follow the instructions:
 
-Type this command to ensure it is that exact issue:
-
-```sh
-cat /etc/resolv.conf | awk '/nameserver/ {print $2}' | grep $(nmcli device show eth0 | awk '/IP4\.DNS/ {print$2}') && echo 'OK. Nothing to do.' || echo 'NOT OK.'
 ```
-
-If you see the message “NOT OK”, run the following commands to update your `/etc/resolv.conf` file:
-
-```sh
-sudo bash -c "echo nameserver $(nmcli device show eth0 | awk '/DNS/{print $2}') >> /etc/resolvconf/resolv.conf.d/tail"
-sudo resolvconf -u && sudo systemctl restart network-manager
+$ ./run-gallery.sh -f
 ```
