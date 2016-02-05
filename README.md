@@ -1,6 +1,6 @@
 # Ubuntu UITK Gallery - Docker image
 
-Tested on Ubuntu, Debian, and Fedora hosts. OS X support via Docker Machine is planned.
+Tested on Ubuntu (14.04, 15.04, 15.10, 16.04), Debian, and Fedora hosts. OS X support via Docker Machine is planned.
 
 ## Installation
 
@@ -31,16 +31,20 @@ To use another branch, pass it as a parameter:
 ./gallery lp:ubuntu-ui-toolkit/trunk
 ```
 
-Use the `-g` parameter to change the number of pixels per Grid Unit:
+Use the `-g` option to change the number of pixels per Grid Unit (`8` by default):
 
 ```sh
 ./gallery -g 16
 ```
 
-Use the `-h` option to display the help:
+```sh
+./gallery -g 16 lp:ubuntu-ui-toolkit/trunk
+```
+
+Use the `-h` option to see all the available options:
 
 ```
-$ ./gallery -h
+./gallery -h
 
 Usage: ./gallery [-hc] [-i DOCKER_IMAGE] [-g GU_PX] [UI_TOOLKIT_BRANCH]
 
