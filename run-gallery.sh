@@ -111,12 +111,16 @@ CID="uitk_$( \
 )"
 
 IMAGE_HOSTNAME=$(docker inspect --format='{{ .Config.Hostname }}' $DOCKER_IMAGE)
-DISTRIBUTION_NAME=$(python -c "import platform;print(platform.linux_distribution()[0])")
 
+# Fix a DNS issue on Ubuntu systems (when 8.8.8.8 is blocked)
 DNS_PARAM=""
-
+DISTRIBUTION_NAME=$(python -c "import platform;print(platform.linux_distribution()[0])")
 if [ $DISTRIBUTION_NAME = "Ubuntu" ]; then
-  dns_server=$(nmcli dev show | awk '/IP4\.DNS/ {print $2}' | head -n1)
+  if command -v nm-tool >/dev/null 2>&1; then
+    dns_server=$(nm-tool | awk '/DNS/ {$1=$1;print $2}' | head -n1)
+  else
+    dns_server=$(nmcli dev show | awk '/IP4\.DNS/ {print $2}' | head -n1)
+  fi
   DNS_PARAM="--dns=$dns_server"
 fi
 
