@@ -3,26 +3,8 @@
 DEFAULT_UITK_BRANCH=lp:ubuntu-ui-toolkit/staging
 DOCKER_IMAGE=bpierre/ubuntu-uitk-gallery
 GRID_UNIT_PX=8
-
-show_help() {
-cat << EOF
-Usage: ./${0##*/} [-hc] [-i DOCKER_IMAGE] [-g GU_PX] [UI_TOOLKIT_BRANCH]
-
-    -h              Display this help and exit.
-    -i DOCKER_IMAGE Change the Docker image used to create the containers.
-    -g GU_PX        Change the number of pixels per grid unit (to scale
-                    things).
-    -c              Remove the containers and images created by the script.
-EOF
-}
-
-clean_all() {
-  echo 'Clean containers...'
-  docker rm $(docker ps -a | awk '/uitk_/ {print $1}')
-
-  echo 'Clean images...'
-  docker rmi  $DOCKER_IMAGE
-}
+PLATFORM=$(python -c "import sys;print(sys.platform)")
+DISTRIBUTION=$(python -c "import platform;print(platform.linux_distribution()[0])")
 
 # http://djm.me/ask
 ask() {
@@ -57,18 +39,109 @@ ask() {
   done
 }
 
-if ! command -v docker >/dev/null 2>&1; then
+# Colors: check if stdout is a terminal and supports colors
+if test -t 1; then
+  ncolors=$(tput colors)
+  if test -n "$ncolors" && test $ncolors -ge 8; then
+    normal="$(tput sgr0)"
+    red="$(tput setaf 1)"
+    green="$(tput setaf 2)"
+    yellow="$(tput setaf 3)"
+    blue="$(tput setaf 4)"
+    magenta="$(tput setaf 5)"
+    cyan="$(tput setaf 6)"
+    white="$(tput setaf 7)"
+  fi
+fi
+
+pretty_echo() {
+  infostr=""
+  if [ $# -ge 2 ] && [ "$2" != "" ]; then
+    infostr="$2 "
+  fi
+  if [ $# -ge 3 ] && [ "$3" != "" ]; then
+    infostr="${infostr}${yellow}${3}${normal} "
+  fi
+  if [ "$infostr" != "" ]; then
+    echo "$1 $infostr"
+  fi
+}
+
+echo_check() {
+  pretty_echo " ${green}✓${normal}" "$@"
+}
+
+echo_info() {
+  pretty_echo " ${green}|${normal}" "$@"
+}
+
+show_help() {
+cat << EOF
+Usage: ./${0##*/} [-hc] [-i DOCKER_IMAGE] [-g GU_PX] [UI_TOOLKIT_BRANCH]
+
+    -h              Display this help and exit.
+    -i DOCKER_IMAGE Change the Docker image used to create the containers.
+    -g GU_PX        Change the number of pixels per grid unit (to scale
+                    things).
+    -c              Remove the containers and images created by the script.
+EOF
+}
+
+clean_all() {
+  echo ""
+  if ask "This action will remove the created images and containers. Are you sure?" N; then
+    echo 'Clean containers...'
+    docker rm $(docker ps -a | awk '/uitk_/ {print $1}')
+
+    echo 'Clean images...'
+    docker rmi  $DOCKER_IMAGE
+
+  else
+    echo "Exiting."
+  fi
+  exit 0
+}
+
+# Docker auto installation
+docker_or_exit() {
+  if command -v docker >/dev/null 2>&1; then
+    return 0
+  fi
   if ask "Docker not installed. Do you want to install it now?"; then
       wget -qO- https://get.docker.com/ | sh
-      sudo usermod -aG docker `whoami`
-      echo "Please logout and login again, then launch the script again."
+
+      if [ "$PLATFORM" = "darwin" ]; then
+        # TODO: OS X support
+        echo "Docker is probably installed."
+
+      elif [ "$PLATFORM" = "linux2" ]; then
+        sudo usermod -aG docker `whoami`
+        echo "Please logout and login again, then launch the script again."
+      fi
+
       exit 0
   fi
   echo "Exiting."
   exit 0
-fi
+}
 
-# Get options
+# The platform can only be "darwin" or "linux2".
+platform_or_exit() {
+  if [ "$PLATFORM" != "darwin" ] && [ "$PLATFORM" != "linux2" ]; then
+    echo "Unsupported platform: ${PLATFORM}." 1>&2
+    exit 1
+  fi
+  return 0
+}
+
+check_requirements() {
+  platform_or_exit && echo_check "Platform supported -" "$PLATFORM"
+  docker_or_exit && echo_check "Docker installed -" "$(docker --version | awk '{$1="";$0=$0;$1=$1;print $0}')"
+}
+
+echo
+
+# Options
 OPTIND=1
 while getopts "hcfi:g:" opt; do
   case "$opt" in
@@ -77,12 +150,8 @@ while getopts "hcfi:g:" opt; do
       exit 0
       ;;
     c)
-      if ask "This action will clean all the Docker images and containers created by this script. Are you sure?" N; then
-        clean_all && exit 0
-      else
-        echo "Exiting."
-        exit 0
-      fi
+      check_requirements
+      clean_all
       ;;
     i)
       DOCKER_IMAGE=$OPTARG
@@ -98,33 +167,44 @@ while getopts "hcfi:g:" opt; do
 done
 shift "$((OPTIND-1))"
 
+# Set the default branch if the user didn’t set anything
 UITK_BRANCH="$@"
 if [ -z "$UITK_BRANCH" ]; then
-  echo "The default branch ${DEFAULT_UITK_BRANCH} will be used."
   UITK_BRANCH="$DEFAULT_UITK_BRANCH"
 fi
 
+# Options parsed, check the requirements first
+check_requirements
+
+# Create a UID for the container, based on the parameters
 CID="uitk_$( \
   echo ${DOCKER_IMAGE}${GRID_UNIT_PX}${UITK_BRANCH}$CID | \
   shasum -a 1 | \
   awk '{print $1}' \
 )"
 
-IMAGE_HOSTNAME=$(docker inspect --format='{{ .Config.Hostname }}' $DOCKER_IMAGE)
+echo_check "Branch selected -" "$DEFAULT_UITK_BRANCH"
+echo_check "Pixels per Grid Unit -" "$GRID_UNIT_PX"
 
 # Fix a DNS issue on Ubuntu systems (when 8.8.8.8 is blocked)
 DNS_PARAM=""
-DISTRIBUTION_NAME=$(python -c "import platform;print(platform.linux_distribution()[0])")
-if [ $DISTRIBUTION_NAME = "Ubuntu" ]; then
-  if command -v nm-tool >/dev/null 2>&1; then
-    dns_server=$(nm-tool | awk '/DNS/ {$1=$1;print $2}' | head -n1)
-  else
-    dns_server=$(nmcli dev show | awk '/IP4\.DNS/ {print $2}' | head -n1)
+if [ "$PLATFORM" = "linux2" ]; then
+  if [ "$DISTRIBUTION" = "Ubuntu" ]; then
+    if command -v nm-tool >/dev/null 2>&1; then
+      dns_server=$(nm-tool | awk '/DNS/ {$1=$1;print $2}' | head -n1)
+    elif command -v nmcli >/dev/null 2>&1; then
+      dns_server=$(nmcli dev show | awk '/IP4\.DNS/ {print $2}' | head -n1)
+    fi
+    if [ "$dns_server" != "" ]; then
+      DNS_PARAM="--dns=$dns_server"
+      echo_check "Additional DNS server set -" $dns_server
+    fi
   fi
-  DNS_PARAM="--dns=$dns_server"
 fi
 
-xhost +local:$IMAGE_HOSTNAME >/dev/null 2>&1 \
+echo
+
+xhost +local:$CID >/dev/null 2>&1 \
   || { echo "X11 redirection error"; exit 1; }
 
 # Try to start an existing container…
@@ -137,10 +217,11 @@ if [ "$?" != "0" ]; then
     -e DISPLAY=unix$DISPLAY \
     -e UITK_BRANCH="$UITK_BRANCH" \
     --name="$CID" \
+    --hostname="$CID" \
     $DNS_PARAM \
     --dns="8.8.8.8" \
     $DOCKER_IMAGE
 fi
 
-xhost -local:$IMAGE_HOSTNAME >/dev/null 2>&1 \
+xhost -local:$CID >/dev/null 2>&1 \
   || { echo "X11 redirection error"; exit 1; }
