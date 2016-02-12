@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 DEFAULT_UITK_BRANCH=lp:ubuntu-ui-toolkit/staging
 DOCKER_IMAGE=bpierre/ubuntu-uitk-gallery
@@ -42,7 +42,7 @@ ask() {
 # Colors: check if stdout is a terminal and supports colors
 if test -t 1; then
   ncolors=$(tput colors)
-  if test -n "$ncolors" && test $ncolors -ge 8; then
+  if [ -n "$ncolors" ] && [ $ncolors -ge 8 ]; then
     normal="$(tput sgr0)"
     red="$(tput setaf 1)"
     green="$(tput setaf 2)"
@@ -63,16 +63,37 @@ pretty_echo() {
     infostr="${infostr}${yellow}${3}${normal} "
   fi
   if [ "$infostr" != "" ]; then
-    echo "$1 $infostr"
+    echo -n "$1 $infostr"
   fi
 }
 
 echo_check() {
   pretty_echo " ${green}✓${normal}" "$@"
+  echo ""
 }
 
-echo_info() {
-  pretty_echo " ${green}|${normal}" "$@"
+echo_err() {
+  pretty_echo " ${red}✗${normal}" "$@"
+  echo ""
+}
+
+echo_wait() {
+  tput sc
+  echo_wait_par1=$1
+  echo_wait_par2=$2
+  pretty_echo " ${blue}…${normal}" "$@"
+}
+
+echo_wait_stop_ok() {
+  tput rc
+  tput ed
+  echo_check "$echo_wait_par1" "$echo_wait_par2"
+}
+
+echo_wait_stop_nok() {
+  tput rc
+  tput ed
+  echo_err "$echo_wait_par1" "$echo_wait_par2"
 }
 
 show_help() {
@@ -139,6 +160,25 @@ check_requirements() {
   docker_or_exit && echo_check "Docker installed -" "$(docker --version | awk '{$1="";$0=$0;$1=$1;print $0}')"
 }
 
+x11_redirect_on() {
+  if [ "$PLATFORM" = "linux2" ]; then
+    xhost +local:$CID >/dev/null 2>&1 || { echo "X11 redirection error"; exit 1; }
+  elif [ "$PLATFORM" = "darwin" ]; then
+    socat TCP-LISTEN:6000,reuseaddr,fork UNIX-CLIENT:\"$DISPLAY\" &
+    SOCAT_PID=$!
+  fi
+  return 0
+}
+
+x11_redirect_off() {
+  if [ "$PLATFORM" = "linux2" ]; then
+    xhost -local:$CID >/dev/null 2>&1 || { echo "X11 redirection error"; exit 1; }
+  elif [ "$PLATFORM" = "darwin" ] && [ -n "$SOCAT_PID" ]; then
+    kill $SOCAT_PID
+  fi
+  return 0
+}
+
 echo
 
 # Options
@@ -176,6 +216,9 @@ fi
 # Options parsed, check the requirements first
 check_requirements
 
+echo_check "Docker Image set -" "$DOCKER_IMAGE"
+echo
+
 # Create a UID for the container, based on the parameters
 CID="uitk_$( \
   echo ${DOCKER_IMAGE}${GRID_UNIT_PX}${UITK_BRANCH}$CID | \
@@ -183,11 +226,12 @@ CID="uitk_$( \
   awk '{print $1}' \
 )"
 
-echo_check "Branch selected -" "$DEFAULT_UITK_BRANCH"
-echo_check "Pixels per Grid Unit -" "$GRID_UNIT_PX"
+echo_check "Branch -" "$DEFAULT_UITK_BRANCH"
+echo_check "Pixels per GU -" "$GRID_UNIT_PX"
+echo
 
-# Fix a DNS issue on Ubuntu systems (when 8.8.8.8 is blocked)
-DNS_PARAM=""
+# Fix a DNS issue on Ubuntu / OS X systems when external DNS are blocked
+DNS_EXTRA=""
 if [ "$PLATFORM" = "linux2" ]; then
   if [ "$DISTRIBUTION" = "Ubuntu" ]; then
     if command -v nm-tool >/dev/null 2>&1; then
@@ -195,33 +239,49 @@ if [ "$PLATFORM" = "linux2" ]; then
     elif command -v nmcli >/dev/null 2>&1; then
       dns_server=$(nmcli dev show | awk '/IP4\.DNS/ {print $2}' | head -n1)
     fi
-    if [ "$dns_server" != "" ]; then
-      DNS_PARAM="--dns=$dns_server"
-      echo_check "Additional DNS server set -" $dns_server
-    fi
   fi
+elif [ "$PLATFORM" = "darwin" ]; then
+  dns_server=$(cat /etc/resolv.conf | awk '/^nameserver/ { print $2 }' | head -n1)
 fi
 
-echo
+if [ "$dns_server" != "" ]; then
+  DNS_EXTRA="--dns=$dns_server"
+  echo_check "Additional DNS server set -" $dns_server
+fi
 
-xhost +local:$CID >/dev/null 2>&1 \
-  || { echo "X11 redirection error"; exit 1; }
+DOCKER_DISPLAY="unix$DISPLAY"
+if [ "$PLATFORM" = "darwin" ]; then
+  HOST_IP=$(ifconfig $(route -n get $(docker-machine ip default) | awk '/interface/ { print $2 }') | awk '/inet/ { print $2 }')
+  DOCKER_DISPLAY="$HOST_IP:0"
+fi
 
-# Try to start an existing container…
-docker start -a "$CID" 2>/dev/null
+x11_redirect_on
+echo_check "X11 redirect -" "done"
 
-# Create it if doesn’t exist.
-if [ "$?" != "0" ]; then
+CONTAINER_EXISTS=$(docker ps -a | grep "$CID")
+
+if [ -n "$CONTAINER_EXISTS" ]; then
+
+  # Re attach an existing container
+  echo_check "The container already exist -" "attaching"
+  echo
+
+  docker start --attach "$CID" 2>/dev/null
+else
+
+  # Instanciate a new container
+  echo_check "The container does not exist -" "creating"
+  echo
+
   docker run -it \
-    -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
-    -e DISPLAY=unix$DISPLAY \
-    -e UITK_BRANCH="$UITK_BRANCH" \
+    --volume /tmp/.X11-unix:/tmp/.X11-unix:rw \
+    --privileged \
+    --env DISPLAY=$DOCKER_DISPLAY \
+    --env UITK_BRANCH="$UITK_BRANCH" \
     --name="$CID" \
     --hostname="$CID" \
-    $DNS_PARAM \
-    --dns="8.8.8.8" \
+    $DNS_EXTRA --dns="8.8.8.8" \
     $DOCKER_IMAGE
 fi
 
-xhost -local:$CID >/dev/null 2>&1 \
-  || { echo "X11 redirection error"; exit 1; }
+x11_redirect_off
