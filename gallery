@@ -278,6 +278,7 @@ else
     --privileged \
     --env DISPLAY=$DOCKER_DISPLAY \
     --env UITK_BRANCH="$UITK_BRANCH" \
+    --env GRID_UNIT_PX="$GRID_UNIT_PX" \
     --name="$CID" \
     --hostname="$CID" \
     $DNS_EXTRA --dns="8.8.8.8" \
