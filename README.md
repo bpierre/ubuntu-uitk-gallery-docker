@@ -14,7 +14,7 @@ curl -L https://goo.gl/Of6MEj > gallery && chmod +x ./gallery
 
 The `gallery` tool will automatically:
 
-- Install Docker if needed (remember to logout / login after this)
+- Install Docker if needed − **remember to logout / login after this!**
 - Fetch the code from the selected branch
 - Compile the project if needed
 - Run the gallery app
