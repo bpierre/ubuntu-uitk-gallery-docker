@@ -11,6 +11,7 @@ RUN apt-get update \
         liblttng-ctl0 \
         liblttng-ust-dev \
         liblttng-ust-ctl2 \
+        libxi-dev \
         ttf-ubuntu-font-family \
         qml-module-qt-labs-folderlistmodel \
     && apt-get build-dep -y ubuntu-ui-toolkit \
