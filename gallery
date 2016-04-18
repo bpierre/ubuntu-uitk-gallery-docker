@@ -1,10 +1,20 @@
 #!/bin/bash
 
+DEBUG_MODE=false
+LOG_FILE=uitk-gallery.log
 DEFAULT_UITK_BRANCH=lp:ubuntu-ui-toolkit/staging
 DOCKER_IMAGE=bpierre/ubuntu-uitk-gallery
 GRID_UNIT_PX=8
 PLATFORM=$(python -c "import sys;print(sys.platform)")
 DISTRIBUTION=$(python -c "import platform;print(platform.linux_distribution()[0])")
+
+run() {
+  if $DEBUG_MODE; then
+    "$@"
+  else
+    "$@" &>"$LOG_FILE"
+  fi
+}
 
 # http://djm.me/ask
 ask() {
@@ -183,7 +193,7 @@ echo
 
 # Options
 OPTIND=1
-while getopts "hcfi:g:" opt; do
+while getopts "hcdi:g:" opt; do
   case "$opt" in
     h)
       show_help
@@ -198,6 +208,9 @@ while getopts "hcfi:g:" opt; do
       ;;
     g)
       GRID_UNIT_PX=$OPTARG
+      ;;
+    d)
+      DEBUG_MODE=true
       ;;
     \?)
       show_help >&2
@@ -266,14 +279,14 @@ if [ -n "$CONTAINER_EXISTS" ]; then
   echo_check "The container already exist -" "attaching"
   echo
 
-  docker start --attach "$CID" 2>/dev/null
+  run docker start --attach "$CID"
 else
 
   # Instanciate a new container
   echo_check "The container does not exist -" "creating"
   echo
 
-  docker run -it \
+  run docker run -it \
     --volume /tmp/.X11-unix:/tmp/.X11-unix:rw \
     --privileged \
     --env DISPLAY=$DOCKER_DISPLAY \
