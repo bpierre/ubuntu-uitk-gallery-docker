@@ -3,7 +3,8 @@
 DEBUG_MODE=false
 LOG_FILE=uitk-gallery.log
 DEFAULT_UITK_BRANCH=lp:ubuntu-ui-toolkit/staging
-DOCKER_IMAGE=bpierre/ubuntu-uitk-gallery
+DEFAULT_DOCKER_IMAGE=bpierre/ubuntu-uitk-gallery
+DOCKER_IMAGE="$DEFAULT_DOCKER_IMAGE"
 GRID_UNIT_PX=8
 PLATFORM=$(python -c "import sys;print(sys.platform)")
 DISTRIBUTION=$(python -c "import platform;print(platform.linux_distribution()[0])")
@@ -230,6 +231,12 @@ fi
 check_requirements
 
 echo_check "Docker Image set -" "$DOCKER_IMAGE"
+
+if [ "$DOCKER_IMAGE" = "$DEFAULT_DOCKER_IMAGE" ]; then
+  echo_check "Docker Image update -" "fetching"
+  run docker pull "$DEFAULT_DOCKER_IMAGE"
+fi
+
 echo
 
 # Create a UID for the container, based on the parameters
