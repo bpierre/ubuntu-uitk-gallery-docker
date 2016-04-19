@@ -53,4 +53,5 @@ Usage: ./gallery [-hc] [-i DOCKER_IMAGE] [-g GU_PX] [UI_TOOLKIT_BRANCH]
     -g GU_PX        Change the number of pixels per grid unit (to scale
                     things).
     -c              Remove the containers and images created by the tool.
+    -d              Verbose output for debugging purposes.
 ```
