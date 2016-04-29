@@ -258,7 +258,7 @@ if [ "$PLATFORM" = "linux2" ]; then
     if command -v nm-tool >/dev/null 2>&1; then
       dns_server=$(nm-tool | awk '/DNS/ {$1=$1;print $2}' | head -n1)
     elif command -v nmcli >/dev/null 2>&1; then
-      dns_server=$(nmcli dev show | awk '/IP4\.DNS/ {print $2}' | head -n1)
+      dns_server=$(nmcli --nocheck dev show | awk '/IP4\.DNS/ {print $2}' | head -n1)
     fi
   fi
 elif [ "$PLATFORM" = "darwin" ]; then
