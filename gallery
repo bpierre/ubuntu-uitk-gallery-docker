@@ -124,7 +124,7 @@ clean_all() {
   echo ""
   if ask "This action will remove the created images and containers. Are you sure?" N; then
     echo 'Clean containers...'
-    docker rm $(docker ps -a | awk '/uitk_/ {print $1}')
+    docker rm $(docker ps -a | awk '/uitk/ {print $1}')
 
     echo 'Clean images...'
     docker rmi  $DOCKER_IMAGE
@@ -241,7 +241,7 @@ fi
 echo
 
 # Create a UID for the container, based on the parameters
-CID="uitk_$( \
+CID="uitk$( \
   echo ${DOCKER_IMAGE}${GRID_UNIT_PX}${UITK_BRANCH}$CID | \
   shasum -a 1 | \
   awk '{print $1}' \
