@@ -14,6 +14,10 @@ RUN apt-get update \
         libxi-dev \
         ttf-ubuntu-font-family \
         qml-module-qt-labs-folderlistmodel \
+        libqt5systeminfo5 \
+        qtsystems5-dev \
+        qtsystems5-private-dev \
+        libevdev-dev \
     && apt-get build-dep -y ubuntu-ui-toolkit \
     && rm -rf /var/lib/apt/lists/*
 
